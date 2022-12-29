@@ -48,9 +48,9 @@ class Cryptosystem:
 
     def __jacobi_symbol(self, n: int, p: int) -> int:
         if p <= 0:
-            raise ValueError("'n' must be a positive integer.")
+            raise Exception("'n' must be a positive integer.")
         if p % 2 == 0:
-            raise ValueError("'n' must be odd.")
+            raise Exception("'n' must be odd.")
         n %= p
         result = 1
         while n != 0:
@@ -140,30 +140,30 @@ class Cryptosystem:
         if not (27 ** k < self._public_key < 27 ** l):
             raise Exception(f"k = {k} and l = {l} are not valid for n = {self._public_key}")
 
-        print(f"plaintext: {plaintext}")
+        print(f"Plaintext: {plaintext}")
 
         plaintext_blocks = self._alphabet.split_text_to_blocks(plaintext, k)
-        print(f"plaintext in blocks of {k} letters: {plaintext_blocks}")
+        print(f"Plaintext in Blocks of {k} Letters: {plaintext_blocks}")
 
         plaintext_numerical_equivalents = self._alphabet.convert_blocks_to_numerical_equivalents(plaintext_blocks)
-        print("plaintext numerical equivalents: ", plaintext_numerical_equivalents)
+        print("Plaintext Numerical Equivalents: ", plaintext_numerical_equivalents)
 
         plaintext_redundancies = [self.__smallest_power_of_2_greater_or_equal_to(
             len(self.__get_the_bit_field_of(numerical_equivalent))) - len(
             self.__get_the_bit_field_of(numerical_equivalent)) for numerical_equivalent in plaintext_numerical_equivalents]
-        print("plaintext redundancies: ", plaintext_redundancies)
+        print("Plaintext Redundancies: ", plaintext_redundancies)
 
         plaintext_numerical_equivalents_with_redundancy = []
         for index in range(len(plaintext_numerical_equivalents)):
             plaintext_numerical_equivalents_with_redundancy.append(
                 self.__get_m_with_the_replicated_last_k_bits(plaintext_numerical_equivalents[index], plaintext_redundancies[index]))
-        print("plaintext numerical equivalents with redundancy: ", plaintext_numerical_equivalents_with_redundancy)
+        print("Plaintext Numerical Equivalents with Redundancy: ", plaintext_numerical_equivalents_with_redundancy)
 
         encrypted_numerical_equivalents = [self.__encrypt(m) for m in plaintext_numerical_equivalents_with_redundancy]
-        print("encrypted numerical equivalents: ", encrypted_numerical_equivalents)
+        print("Encrypted Numerical Equivalents: ", encrypted_numerical_equivalents)
 
         ciphertext_blocks = self._alphabet.convert_numerical_equivalents_to_blocks(encrypted_numerical_equivalents, l)
-        print(f"ciphertext in blocks of {l} letters: {ciphertext_blocks}")
+        print(f"Ciphertext in Blocks of {l} Letters: {ciphertext_blocks}")
 
         ciphertext = "".join(ciphertext_blocks)
         print()
@@ -223,25 +223,25 @@ class Cryptosystem:
         if not (27 ** k < self._public_key < 27 ** l):
             raise Exception(f"k = {k} and l = {l} are not valid for n = {self._public_key}")
 
-        print(f"ciphertext: {ciphertext}")
+        print(f"Ciphertext: {ciphertext}")
 
         ciphertext_blocks = self._alphabet.split_text_to_blocks(ciphertext, l)
-        print(f"ciphertext in blocks of {l} letters: {ciphertext_blocks}")
+        print(f"Ciphertext in Blocks of {l} Letters: {ciphertext_blocks}")
 
         ciphertext_numerical_equivalents = self._alphabet.convert_blocks_to_numerical_equivalents(ciphertext_blocks)
-        print("ciphertext numerical equivalents: ", ciphertext_numerical_equivalents)
+        print("Ciphertext Numerical Equivalents: ", ciphertext_numerical_equivalents)
 
         decrypted_possible_numerical_equivalents = [self.__decrypt(ciphertext_numerical_equivalent) for
                                                     ciphertext_numerical_equivalent in ciphertext_numerical_equivalents]
-        print("decrypted possible numerical equivalents: ", decrypted_possible_numerical_equivalents)
+        print("Decrypted Possible Numerical Equivalents: ", decrypted_possible_numerical_equivalents)
 
         decrypted_numerical_equivalents = []
         for index in range(len(decrypted_possible_numerical_equivalents)):
             decrypted_numerical_equivalents.append(self.__find_acceptable_solution(list(decrypted_possible_numerical_equivalents[index]), redundancies[index], k))
-        print("decrypted numerical equivalents: ", decrypted_numerical_equivalents)
+        print("Decrypted Numerical Equivalents: ", decrypted_numerical_equivalents)
 
         plaintext_blocks = self._alphabet.convert_numerical_equivalents_to_blocks(decrypted_numerical_equivalents, k)
-        print(f"plaintext in blocks of {k} letters: {plaintext_blocks}")
+        print(f"Plaintext in Blocks of {k} Letters: {plaintext_blocks}")
 
         plaintext = "".join(plaintext_blocks)
         print()

@@ -7,10 +7,10 @@ from Cryptosystem import Cryptosystem
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    rabin = Cryptosystem(277, 331)
-    ciphertext, redundancies = rabin.encrypt("GAMING", 2, 4)
+    rabin = Cryptosystem(179, 499)
+    ciphertext, redundancies = rabin.encrypt("GAME", 3, 4)
     print()
-    plaintext = rabin.decrypt(ciphertext, redundancies, 2, 4)
+    plaintext = rabin.decrypt(ciphertext, redundancies, 3, 4)
 
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
