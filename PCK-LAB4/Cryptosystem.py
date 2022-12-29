@@ -17,7 +17,7 @@ class Cryptosystem:
         while p < number:
             p <<= 1
 
-        return p;
+        return p
 
     def __init__(self, p: int = 0, q: int = 0):
         print("Rabin Cryptosystem initializing...")
