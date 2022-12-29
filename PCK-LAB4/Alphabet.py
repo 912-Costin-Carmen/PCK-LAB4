@@ -6,8 +6,7 @@ class Alphabet:
         self._blank_character: str = "_"
         self._alphabet: list = [self._blank_character] + [chr(asciiCode) for asciiCode in range(ord('A'), ord('Z') + 1)]
 
-    def _code(self, letter: str) -> int:
-        # TODO: Implement code in case of letter not in alphabet
+    def __code(self, letter: str) -> int:
         return self._alphabet.index(letter)
 
     def split_text_to_blocks(self, message: str, step: int) -> list[str]:
@@ -18,19 +17,19 @@ class Alphabet:
     def convert_blocks_to_numerical_equivalents(self, blocks: list[str]) -> list[int]:
         numerical_equivalents: list[int] = []
         for block in blocks:
-            numerical_equivalents.append(self._convert_block_to_numerical_equivalent(block))
+            numerical_equivalents.append(self.__convert_block_to_numerical_equivalent(block))
         return numerical_equivalents
 
-    def _convert_block_to_numerical_equivalent(self, block: str) -> int:
-        return sum(self._code(character) * pow(len(self._alphabet), len(block) - index - 1) for index, character in enumerate(block))
+    def __convert_block_to_numerical_equivalent(self, block: str) -> int:
+        return sum(self.__code(character) * pow(len(self._alphabet), len(block) - index - 1) for index, character in enumerate(block))
 
     def convert_numerical_equivalents_to_blocks(self, numerical_equivalents: list[int], step: int) -> list[str]:
         blocks: list[str] = []
         for numerical_equivalent in numerical_equivalents:
-            blocks.append(self._convert_numerical_equivalent_to_block(numerical_equivalent, step))
+            blocks.append(self.__convert_numerical_equivalent_to_block(numerical_equivalent, step))
         return blocks
 
-    def _convert_numerical_equivalent_to_block(self, numerical_equivalent: int, step: int) -> str:
+    def __convert_numerical_equivalent_to_block(self, numerical_equivalent: int, step: int) -> str:
         alphabet_indexes: list[int] = []
         while numerical_equivalent > 0:
             alphabet_indexes.insert(0, numerical_equivalent % len(self._alphabet))

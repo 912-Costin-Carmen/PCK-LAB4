@@ -1,21 +1,41 @@
 import copy
+import random
+from typing import Tuple, Union, Any, List
 
 from Alphabet import Alphabet
 from KeyGeneration import KeyGeneration
 
 
 class Cryptosystem:
-    def __init__(self, k: int, p: int = 0, q: int = 0):
-        self._bit_count_used_for_validation = k
 
+    @staticmethod
+    def __smallest_power_of_2_greater_or_equal_to(number: int) -> int:
+        p = 1
+        if number and not (number & (number - 1)):
+            return number
+
+        while p < number:
+            p <<= 1
+
+        return p;
+
+    def __init__(self, p: int = 0, q: int = 0):
+        print("Rabin Cryptosystem initializing...")
+        print("Generating keys...")
         if p == 0 and q == 0:
             keys = KeyGeneration()
         else:
             keys = KeyGeneration(p, q)
         self._private_key = keys.generate_private_key()
+        print(f"Private keys generated: {self._private_key}.")
+
         self._public_key = keys.generate_public_key()
+        print(f"Public key generated: {self._public_key}.")
 
         self._alphabet = Alphabet()
+        print("Alphabet initialized.")
+        print("Rabin Cryptosystem initialized.")
+        print()
 
     @staticmethod
     def __divide_by_two(p: int) -> tuple:
@@ -73,7 +93,8 @@ class Cryptosystem:
                     return (2 * a * ((4 * a) ** ((p - 5) // 8))) % p
 
     def chinese_remainder_theorem(self, a: int, b: int) -> int:
-        return (a * self._private_key[1] * pow(self._private_key[1], -1, self._private_key[0]) + b * self._private_key[0] * pow(self._private_key[0], -1, self._private_key[1])) % self._public_key
+        return (a * self._private_key[1] * pow(self._private_key[1], -1, self._private_key[0]) + b * self._private_key[
+            0] * pow(self._private_key[0], -1, self._private_key[1])) % self._public_key
 
     def __decrypt(self, c: int) -> tuple:
         r1 = self.__modular_square_root(c, self._private_key[0])
@@ -89,11 +110,15 @@ class Cryptosystem:
         return x1, x2, x3, x4
 
     @staticmethod
-    def __get_m_with_the_replicated_last_k_bits(m0: int, k: int) -> int:
-        m0_as_bit_field = [int(digit) for digit in bin(m0)[2:]]
+    def __get_the_bit_field_of(number: int) -> list[int]:
+        number_as_bit_field = [int(digit) for digit in bin(number)[2:]]
+        return number_as_bit_field
 
-        while len(m0_as_bit_field) < 8:
-            m0_as_bit_field.insert(0, 0)
+    def __get_m_with_the_replicated_last_k_bits(self, m0: int, k: int) -> int:
+        if k == 0:
+            return m0
+
+        m0_as_bit_field = self.__get_the_bit_field_of(m0)
 
         m_as_bit_field = copy.deepcopy(m0_as_bit_field)
 
@@ -109,9 +134,9 @@ class Cryptosystem:
         return m
 
     def __encrypt(self, m: int) -> int:
-        return self.__get_m_with_the_replicated_last_k_bits(m, self._bit_count_used_for_validation) ** 2 % self._public_key
+        return m ** 2 % self._public_key
 
-    def encrypt(self, plaintext: str, k: int, l: int) -> str:
+    def encrypt(self, plaintext: str, k: int = 0, l: int = 0) -> tuple[str, list[int]]:
         if not (27 ** k < self._public_key < 27 ** l):
             raise Exception(f"k = {k} and l = {l} are not valid for n = {self._public_key}")
 
@@ -123,39 +148,55 @@ class Cryptosystem:
         plaintext_numerical_equivalents = self._alphabet.convert_blocks_to_numerical_equivalents(plaintext_blocks)
         print("plaintext numerical equivalents: ", plaintext_numerical_equivalents)
 
-        encrypted_numerical_equivalents = [self.__encrypt(m) for m in plaintext_numerical_equivalents]
+        plaintext_redundancies = [self.__smallest_power_of_2_greater_or_equal_to(
+            len(self.__get_the_bit_field_of(numerical_equivalent))) - len(
+            self.__get_the_bit_field_of(numerical_equivalent)) for numerical_equivalent in plaintext_numerical_equivalents]
+        print("plaintext redundancies: ", plaintext_redundancies)
+
+        plaintext_numerical_equivalents_with_redundancy = []
+        for index in range(len(plaintext_numerical_equivalents)):
+            plaintext_numerical_equivalents_with_redundancy.append(
+                self.__get_m_with_the_replicated_last_k_bits(plaintext_numerical_equivalents[index], plaintext_redundancies[index]))
+        print("plaintext numerical equivalents with redundancy: ", plaintext_numerical_equivalents_with_redundancy)
+
+        encrypted_numerical_equivalents = [self.__encrypt(m) for m in plaintext_numerical_equivalents_with_redundancy]
         print("encrypted numerical equivalents: ", encrypted_numerical_equivalents)
 
         ciphertext_blocks = self._alphabet.convert_numerical_equivalents_to_blocks(encrypted_numerical_equivalents, l)
         print(f"ciphertext in blocks of {l} letters: {ciphertext_blocks}")
 
         ciphertext = "".join(ciphertext_blocks)
+        print()
 
-        return ciphertext
+        return ciphertext, plaintext_redundancies
 
-    def __are_the_last_k_bits_replicated(self, m: int) -> bool:
+    def __are_the_last_k_bits_replicated(self, m: int, k: int) -> bool:
+        if k == 0:
+            return True
+
         m_as_bit_field = [int(digit) for digit in bin(m)[2:]]
 
-        while len(m_as_bit_field) < 8:
-            m_as_bit_field.insert(0, 0)
+        if len(m_as_bit_field) < 2 * k:
+            raise Exception(f"There aren't enough bits in the message to check if the last {k} bits are replicated for message {m}.")
 
-        if len(m_as_bit_field) < 2 * self._bit_count_used_for_validation:
-            raise Exception(f"There aren't enough bits in the message to check if the last {self._bit_count_used_for_validation} bits are replicated.")
+        return m_as_bit_field[-k:] == m_as_bit_field[-2 * k:-k]
 
-        return m_as_bit_field[-self._bit_count_used_for_validation:] == m_as_bit_field[-2 * self._bit_count_used_for_validation:-self._bit_count_used_for_validation]
+    def __get_m_without_the_replicated_last_k_bits(self, m: int, k: int) -> int:
+        if k == 0:
+            return m
 
-    def __get_m_without_the_replicated_last_k_bits(self, m: int) -> int:
         m_as_bit_field = [int(digit) for digit in bin(m)[2:]]
 
-        while len(m_as_bit_field) < 8:
+        m_as_bit_field_initial_length = len(m_as_bit_field)
+        while len(m_as_bit_field) < self.__smallest_power_of_2_greater_or_equal_to(m_as_bit_field_initial_length):
             m_as_bit_field.insert(0, 0)
 
         m1_as_bit_field = copy.deepcopy(m_as_bit_field)
 
-        if len(m1_as_bit_field) < self._bit_count_used_for_validation:
-            raise Exception(f"There aren't enough bits in the message to remove the replicated last {self._bit_count_used_for_validation} bits.")
+        if len(m1_as_bit_field) < k:
+            raise Exception(f"There aren't enough bits in the message to remove the replicated last {k} bits.")
 
-        del m1_as_bit_field[-self._bit_count_used_for_validation:]
+        del m1_as_bit_field[-k:]
 
         m1 = 0
         for bit in m1_as_bit_field:
@@ -163,22 +204,22 @@ class Cryptosystem:
 
         return m1
 
-    def __find_acceptable_solution(self, solutions: list, k: int) -> int:
+    def __find_acceptable_solution(self, solutions: list, redundancy: int, k: int) -> int:
         acceptable_solutions = []
         for solution in solutions:
-            if self.__are_the_last_k_bits_replicated(solution):
-                possible_solution = self.__get_m_without_the_replicated_last_k_bits(solution)
+            if self.__are_the_last_k_bits_replicated(solution, redundancy):
+                possible_solution = self.__get_m_without_the_replicated_last_k_bits(solution, redundancy)
                 if possible_solution < 27 ** k:
                     acceptable_solutions.append(possible_solution)
 
         if len(acceptable_solutions) < 1:
-            raise Exception("No acceptable solutions have been found.")
+            raise Exception(f"No acceptable solutions have been found for solutions {solutions}.")
         elif len(acceptable_solutions) > 1:
-            raise Exception("Too many acceptable solutions have been found.")
+            raise Exception(f"Too many acceptable solutions {acceptable_solutions} have been found for solutions {solutions}.")
 
         return acceptable_solutions[0]
 
-    def decrypt(self, ciphertext, k: int, l: int) -> str:
+    def decrypt(self, ciphertext: str, redundancies: list[int], k: int, l: int) -> str:
         if not (27 ** k < self._public_key < 27 ** l):
             raise Exception(f"k = {k} and l = {l} are not valid for n = {self._public_key}")
 
@@ -190,15 +231,19 @@ class Cryptosystem:
         ciphertext_numerical_equivalents = self._alphabet.convert_blocks_to_numerical_equivalents(ciphertext_blocks)
         print("ciphertext numerical equivalents: ", ciphertext_numerical_equivalents)
 
-        decrypted_possible_numerical_equivalents = [self.__decrypt(ciphertext_numerical_equivalent) for ciphertext_numerical_equivalent in ciphertext_numerical_equivalents]
+        decrypted_possible_numerical_equivalents = [self.__decrypt(ciphertext_numerical_equivalent) for
+                                                    ciphertext_numerical_equivalent in ciphertext_numerical_equivalents]
         print("decrypted possible numerical equivalents: ", decrypted_possible_numerical_equivalents)
 
-        decrypted_numerical_equivalents = [self.__find_acceptable_solution(list(possible_numerical_equivalents), k) for possible_numerical_equivalents in decrypted_possible_numerical_equivalents]
+        decrypted_numerical_equivalents = []
+        for index in range(len(decrypted_possible_numerical_equivalents)):
+            decrypted_numerical_equivalents.append(self.__find_acceptable_solution(list(decrypted_possible_numerical_equivalents[index]), redundancies[index], k))
         print("decrypted numerical equivalents: ", decrypted_numerical_equivalents)
 
         plaintext_blocks = self._alphabet.convert_numerical_equivalents_to_blocks(decrypted_numerical_equivalents, k)
         print(f"plaintext in blocks of {k} letters: {plaintext_blocks}")
 
         plaintext = "".join(plaintext_blocks)
+        print()
 
         return plaintext
