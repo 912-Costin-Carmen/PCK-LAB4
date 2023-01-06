@@ -7,6 +7,16 @@ from KeyGeneration import KeyGeneration
 
 
 class Cryptosystem:
+    def __find_fitting_redundancy(self, bit_count: int) -> int:
+        redundancy: int = self.__smallest_power_of_2_greater_or_equal_to(bit_count) - bit_count
+
+        # Whatever's down here is more of a hack than a solution. Not sure if it entirely works in the long run.
+        #
+        # upper_bound_for_redundancy: int = self.__highest_power_of_2_lesser_than(len(self.__get_the_bit_field_of(self._public_key)))
+        # if redundancy < 1 or redundancy > upper_bound_for_redundancy:
+        #     redundancy = upper_bound_for_redundancy - bit_count
+
+        return redundancy
 
     @staticmethod
     def __smallest_power_of_2_greater_or_equal_to(number: int) -> int:
@@ -18,6 +28,15 @@ class Cryptosystem:
             p <<= 1
 
         return p
+
+    @staticmethod
+    def __highest_power_of_2_lesser_than(number: int) -> int:
+        n = number
+        if n & (n - 1) == 0:
+            n -= 1
+        while n & (n - 1) != 0:
+            n = n & (n - 1)
+        return n
 
     def __init__(self, p: int = 0, q: int = 0):
         print("Rabin Cryptosystem initializing...")
@@ -148,9 +167,7 @@ class Cryptosystem:
         plaintext_numerical_equivalents = self._alphabet.convert_blocks_to_numerical_equivalents(plaintext_blocks)
         print("Plaintext Numerical Equivalents: ", plaintext_numerical_equivalents)
 
-        plaintext_redundancies = [self.__smallest_power_of_2_greater_or_equal_to(
-            len(self.__get_the_bit_field_of(numerical_equivalent))) - len(
-            self.__get_the_bit_field_of(numerical_equivalent)) for numerical_equivalent in plaintext_numerical_equivalents]
+        plaintext_redundancies = [self.__find_fitting_redundancy(len(self.__get_the_bit_field_of(numerical_equivalent))) for numerical_equivalent in plaintext_numerical_equivalents]
         print("Plaintext Redundancies: ", plaintext_redundancies)
 
         plaintext_numerical_equivalents_with_redundancy = []
