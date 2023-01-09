@@ -9,13 +9,6 @@ from KeyGeneration import KeyGeneration
 class Cryptosystem:
     def __find_fitting_redundancy(self, bit_count: int) -> int:
         redundancy: int = self.__smallest_power_of_2_greater_or_equal_to(bit_count) - bit_count
-
-        # Whatever's down here is more of a hack than a solution. Not sure if it entirely works in the long run.
-        #
-        # upper_bound_for_redundancy: int = self.__highest_power_of_2_lesser_than(len(self.__get_the_bit_field_of(self._public_key)))
-        # if redundancy < 1 or redundancy > upper_bound_for_redundancy:
-        #     redundancy = upper_bound_for_redundancy - bit_count
-
         return redundancy
 
     @staticmethod
@@ -38,14 +31,17 @@ class Cryptosystem:
             n = n & (n - 1)
         return n
 
-    def __init__(self, p: int = 0, q: int = 0):
+    def __init__(self, k: int, l: int, p: int = 0, q: int = 0):
         print("Rabin Cryptosystem initializing...")
         #The keys are generated
+        print("Storing k and l...")
+        self.__k: int = k
+        self.__l: int = l
         print("Generating keys...")
         if p == 0 and q == 0:
-            keys = KeyGeneration()
+            keys = KeyGeneration(k, l)
         else:
-            keys = KeyGeneration(p, q)
+            keys = KeyGeneration(k, l, p, q)
         self._private_key = keys.generate_private_key()
         print(f"Private keys generated: {self._private_key}.")
         self._public_key = keys.generate_public_key()
@@ -159,7 +155,9 @@ class Cryptosystem:
     def __encrypt(self, m: int) -> int:
         return m ** 2 % self._public_key
 
-    def encrypt(self, plaintext: str, k: int = 0, l: int = 0) -> tuple[str, list[int]]:
+    def encrypt(self, plaintext: str) -> tuple[str, list[int]]:
+        k: int = self.__k
+        l: int = self.__l
         if not (27 ** k < self._public_key < 27 ** l):
             raise Exception(f"k = {k} and l = {l} are not valid for n = {self._public_key}")
 
@@ -240,7 +238,10 @@ class Cryptosystem:
 
         return acceptable_solutions[0]
 
-    def decrypt(self, ciphertext: str, redundancies: list[int], k: int, l: int) -> str:
+    def decrypt(self, ciphertext: str, redundancies: list[int]) -> str:
+        k: int = self.__k
+        l: int = self.__l
+
         if not (27 ** k < self._public_key < 27 ** l):
             raise Exception(f"k = {k} and l = {l} are not valid for n = {self._public_key}")
 

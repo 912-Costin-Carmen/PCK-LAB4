@@ -9,7 +9,14 @@ class Alphabet:
     def __code(self, letter: str) -> int:
         return self._alphabet.index(letter)
 
+    def __is_valid_character(self, character: str) -> bool:
+        return character in self._alphabet
+
     def split_text_to_blocks(self, message: str, step: int) -> list[str]:
+        for character in list(message):
+            if not self.__is_valid_character(character):
+                raise Exception("The message contains invalid characters.")
+
         blocks: list[str] = [message[index:index + step] for index in range(0, len(message), step)]
         blocks[-1] += self._blank_character * (step - len(blocks[-1]))
         return blocks
