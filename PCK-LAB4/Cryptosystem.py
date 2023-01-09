@@ -40,6 +40,7 @@ class Cryptosystem:
 
     def __init__(self, p: int = 0, q: int = 0):
         print("Rabin Cryptosystem initializing...")
+        #The keys are generated
         print("Generating keys...")
         if p == 0 and q == 0:
             keys = KeyGeneration()
@@ -47,10 +48,10 @@ class Cryptosystem:
             keys = KeyGeneration(p, q)
         self._private_key = keys.generate_private_key()
         print(f"Private keys generated: {self._private_key}.")
-
         self._public_key = keys.generate_public_key()
         print(f"Public key generated: {self._public_key}.")
 
+        #Here the alphabet is initialized
         self._alphabet = Alphabet()
         print("Alphabet initialized.")
         print("Rabin Cryptosystem initialized.")
@@ -78,6 +79,7 @@ class Cryptosystem:
                 n_mod_8 = p % 8
                 if n_mod_8 in (3, 5):
                     result = -result
+            #(Law of Quadratic Reciprocity)
             n, p = p, n
             if n % 4 == 3 and p % 4 == 3:
                 result = -result
