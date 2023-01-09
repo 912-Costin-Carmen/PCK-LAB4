@@ -71,7 +71,7 @@ class Cryptosystem:
             raise Exception("'n' must be a positive integer.")
         if p % 2 == 0:
             raise Exception("'n' must be odd.")
-        if p <= 3:
+        if p < 3:
             raise Exception("'n' must be equal or bigger then 3")
         n %= p
         result = 1
